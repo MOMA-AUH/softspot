@@ -1,0 +1,90 @@
+name: Publish Conda Package
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build and test conda package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v4
+        with:
+          auto-update-conda: true
+          activate-environment: softspot-build
+          environment-file: environment.yaml
+          channels: conda-forge,bioconda,defaults
+          channel-priority: strict
+          use-mamba: true
+
+      - name: Install conda-build
+        shell: bash -l {0}
+        run: conda install --yes --channel conda-forge conda-build
+
+      - name: Build package
+        shell: bash -l {0}
+        run: conda-build devtools/conda-recipe
+
+      - name: Locate built package
+        id: locate
+        shell: bash -l {0}
+        run: |
+          package_path="$(conda-build devtools/conda-recipe --output)"
+          test -n "$package_path"
+          test -f "$package_path"
+          echo "package_path=$package_path" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke test built package
+        shell: bash -l {0}
+        run: conda-build --test "${{ steps.locate.outputs.package_path }}"
+
+      - name: Upload conda artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: conda-package
+          path: ${{ steps.locate.outputs.package_path }}
+
+  publish-conda:
+    name: Publish to MOMA-AUH channel
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    environment:
+      name: conda
+      url: https://anaconda.org/MOMA-AUH/softspot
+
+    steps:
+      - name: Download conda artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: conda-package
+          path: dist
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v4
+        with:
+          auto-update-conda: true
+          activate-environment: softspot-publish
+          python-version: "3.12"
+
+      - name: Install upload tooling
+        shell: bash -l {0}
+        run: conda install --yes --channel defaults anaconda-client
+
+      - name: Publish package to MOMA-AUH channel
+        shell: bash -l {0}
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
+        run: |
+          package_path="$(find dist -type f \( -name '*.conda' -o -name '*.tar.bz2' \) | head -n 1)"
+          test -n "$package_path"
+          anaconda -t "$ANACONDA_API_TOKEN" upload --skip-existing --user MOMA-AUH "$package_path"

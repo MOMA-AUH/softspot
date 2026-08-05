@@ -1,0 +1,51 @@
+name: CI
+
+on: ["push", "pull_request"]
+
+jobs:
+  tests:
+    name: "Python ${{ matrix.python-version }}"
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "${{ matrix.python-version }}"
+
+      - name: Install package and run unit tests
+        run: |
+          python -m pip install . coverage
+          coverage run -m unittest discover -s tests -v
+          coverage report
+
+      - name: Smoke-test the command
+        run: |
+          softspot --help
+          softspot --version
+
+  package:
+    name: Build Python distributions
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build wheel and source distribution
+        run: |
+          python -m pip install build
+          python -m build
+
+      - name: Install and smoke-test the wheel
+        run: |
+          python -m pip install dist/*.whl
+          python -c "import softspot"
+          softspot --help
+          softspot --version

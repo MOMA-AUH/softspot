@@ -1,0 +1,16 @@
+name: softspot-dev
+
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - python>=3.10
+  - pip
+  - setuptools>=61
+  - wheel
+  - click
+  - pysam
+  - coverage
+  - pip:
+      - -e .

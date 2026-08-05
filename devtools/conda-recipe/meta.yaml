@@ -1,0 +1,38 @@
+{% set name = "softspot" %}
+{% set version = "0.1.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  path: ../..
+
+build:
+  noarch: python
+  number: 0
+  script: {{ PYTHON }} -m pip install . --no-deps --no-build-isolation --ignore-installed -vv
+
+requirements:
+  host:
+    - python >=3.10
+    - pip
+    - setuptools >=61
+    - wheel
+  run:
+    - python >=3.10
+    - click
+    - pysam
+
+test:
+  imports:
+    - softspot
+  commands:
+    - softspot --help
+    - softspot --version
+
+about:
+  home: https://github.com/MOMA-AUH/softspot
+  summary: Measure RNA-library contamination signatures in DNA sequencing data
+  license: MIT
+  license_file: LICENSE
