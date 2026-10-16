@@ -7,7 +7,7 @@ channels:
 dependencies:
   - python>=3.10
   - pip
-  - setuptools>=61
+  - setuptools>=84.0.0
   - wheel
   - click
   - pysam
