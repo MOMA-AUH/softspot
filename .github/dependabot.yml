@@ -1,5 +1,12 @@
 version: 2
 updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    assignees:
+      - micknudsen
+
   - package-ecosystem: pip
     directory: /
     schedule:
@@ -8,13 +15,6 @@ updates:
       - micknudsen
 
   - package-ecosystem: conda
-    directory: /
-    schedule:
-      interval: weekly
-    assignees:
-      - micknudsen
-
-  - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
