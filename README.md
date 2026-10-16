@@ -207,15 +207,27 @@ then publishes the artifact to the `MOMA-AUH` Anaconda channel. Publishing
 requires the repository secret `ANACONDA_API_TOKEN`; existing artifacts are
 skipped.
 
-Update all version declarations with the supplied tool before tagging:
+Prepare version changes on a release branch and open a pull request to `master`:
 
 ```bash
+git switch master
+git pull --ff-only origin master
+git switch -c release/v0.2.0
 python tools/set_version.py 0.2.0
 coverage run -m unittest discover -s tests -v
 git add pyproject.toml devtools/conda-recipe/meta.yaml src/softspot/__init__.py
 git commit -m "Release v0.2.0"
+git push -u origin release/v0.2.0
+```
+
+After the required checks pass, squash-merge the release pull request. Tag the
+resulting commit on `master` and push only the release tag:
+
+```bash
+git switch master
+git pull --ff-only origin master
 git tag v0.2.0
-git push origin master v0.2.0
+git push origin v0.2.0
 ```
 
 Releases are published to <https://anaconda.org/MOMA-AUH/softspot>.
